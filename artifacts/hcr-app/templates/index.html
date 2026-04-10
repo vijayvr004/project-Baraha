@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handwritten Character Recognition</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Character Recognition</h1>
+            <p class="subtitle">Draw a character (A–Z, 0–9) and let AI identify it</p>
+        </header>
+
+        <main>
+            <div class="app-layout">
+                <div class="canvas-section">
+                    <div class="canvas-wrapper">
+                        <canvas id="drawCanvas" width="300" height="300"></canvas>
+                        <div class="canvas-hint">Draw here</div>
+                    </div>
+                    <div class="controls">
+                        <button id="clearBtn" class="btn btn-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            </svg>
+                            Clear
+                        </button>
+                        <button id="predictBtn" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                            </svg>
+                            Predict
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-section">
+                    <div class="result-card" id="resultCard">
+                        <div class="result-idle" id="resultIdle">
+                            <div class="idle-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                                </svg>
+                            </div>
+                            <p>Draw a character and click Predict</p>
+                        </div>
+
+                        <div class="result-loading" id="resultLoading">
+                            <div class="spinner"></div>
+                            <p>Analyzing...</p>
+                        </div>
+
+                        <div class="result-output" id="resultOutput">
+                            <div class="predicted-char" id="predictedChar">?</div>
+                            <div class="confidence-container">
+                                <span class="confidence-label">Confidence</span>
+                                <div class="confidence-bar-wrapper">
+                                    <div class="confidence-bar" id="confidenceBar"></div>
+                                </div>
+                                <span class="confidence-value" id="confidenceValue">0%</span>
+                            </div>
+
+                            <div class="alternatives">
+                                <p class="alternatives-label">Other possibilities</p>
+                                <div class="alternatives-list" id="alternativesList"></div>
+                            </div>
+                        </div>
+
+                        <div class="result-error" id="resultError">
+                            <div class="error-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                            </div>
+                            <p id="errorMessage">An error occurred.</p>
+                            <p class="error-sub" id="errorSub"></p>
+                        </div>
+                    </div>
+
+                    <div class="info-panel">
+                        <div class="info-item">
+                            <span class="info-label">Dataset</span>
+                            <span class="info-value">EMNIST Balanced</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Classes</span>
+                            <span class="info-value">47 characters</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Architecture</span>
+                            <span class="info-value">CNN</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
