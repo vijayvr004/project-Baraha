@@ -241,7 +241,7 @@ def gemini_ocr(pil_img):
                 body = e.read().decode('utf-8', errors='replace')
                 print(f"[Gemini] {model} attempt {attempt+1}: HTTP {e.code} - {body[:120]}")
                 if e.code == 429:
-                    wait = 10 * (attempt + 1)
+                    wait = 5
                     print(f"[Gemini] Rate limited - waiting {wait}s...")
                     time.sleep(wait)
                 else:
@@ -302,7 +302,7 @@ def gemini_ocr_multi(pil_images):
             body = e.read().decode('utf-8', errors='replace')
             print(f"[Gemini] multi attempt {attempt+1}: HTTP {e.code} - {body[:120]}")
             if e.code == 429:
-                wait = 10 * (attempt + 1)
+                wait = 5
                 time.sleep(wait)
             else:
                 break
@@ -778,7 +778,7 @@ def ocr():
         try:
             doc = fitz.open(stream=file.read(), filetype="pdf")
             for page in doc:
-                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # Zoom for better quality
+                pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))  # Lower zoom to save memory on free tier
                 img = PILImage.frombytes("RGB", [pix.width, pix.height], pix.samples)
                 pil_images.append(img)
             doc.close()
