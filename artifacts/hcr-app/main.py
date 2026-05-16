@@ -20,13 +20,9 @@ CORS(app)
 # =============================================================================
 # PYTHON ENVIRONMENT GUARD
 # =============================================================================
-if sys.version_info[:2] != (3, 10):
-    print("=" * 65)
-    print(f"  WRONG PYTHON: {sys.executable}")
-    print(f"  This is Python {sys.version_info[:2]}, but hcr-env needs 3.10")
-    print(f"  Please use: start_server.bat  OR")
-    print(f"  C:\\Users\\varsh\\.conda\\envs\\hcr-env\\python.exe main.py")
-    print("=" * 65)
+if sys.version_info[:2] not in ((3, 10), (3, 11), (3, 12)):
+    print(f"  WARNING: Running Python {'.'.join(map(str, sys.version_info[:2]))}")
+    print(f"  Recommended: Python 3.10 or 3.11")
 
 
 # =============================================================================

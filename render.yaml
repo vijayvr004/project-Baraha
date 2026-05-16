@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: project-baraha
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r artifacts/hcr-app/render_requirements.txt
+    startCommand: cd artifacts/hcr-app && gunicorn main:app --bind 0.0.0.0:$PORT --timeout 120 --workers 2
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: "3"
