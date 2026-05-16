@@ -1,27 +1,22 @@
 import os
 import numpy as np
 
-print("Loading EMNIST dataset...")
-from emnist import extract_training_samples, extract_test_samples
+print("Loading EMNIST Balanced dataset from local file...")
+npz_path = os.path.join(os.path.dirname(__file__), 'dataset', 'emnist_balanced.npz')
+if not os.path.exists(npz_path):
+    print(f"Error: {npz_path} not found. Please run export_dataset.py first!")
+    exit(1)
 
-X_train, y_train = extract_training_samples('balanced')
-X_test, y_test = extract_test_samples('balanced')
+data = np.load(npz_path)
+X_train, y_train = data['X_train'], data['y_train']
+X_test, y_test = data['X_test'], data['y_test']
 
 print(f"Training samples: {X_train.shape[0]}")
 print(f"Test samples: {X_test.shape[0]}")
 print(f"Number of classes: {len(np.unique(y_train))}")
 
-def fix_emnist_orientation(images):
-    fixed = []
-    for img in images:
-        img_rot = np.rot90(img, k=3)
-        img_flip = np.fliplr(img_rot)
-        fixed.append(img_flip)
-    return np.array(fixed)
-
-print("Fixing EMNIST orientation (rotate 90° CW + flip horizontal)...")
-X_train = fix_emnist_orientation(X_train)
-X_test = fix_emnist_orientation(X_test)
+# The EMNIST library natively exports correct orientations. No rotation fixes are needed.
+# (Applying rotations will break the model and make it predict upside-down/sideways characters).
 
 X_train = X_train.astype(np.float32) / 255.0
 X_test = X_test.astype(np.float32) / 255.0

@@ -1,54 +1,37 @@
 Role: You are an Expert Full-Stack ML Engineer.
-Task: Build a production-ready, zero-error Handwritten Character Recognition (A-Z, 0-9) web application from scratch.
+Task: Build and maintain a production-ready Handwritten Character Recognition (A-Z, 0-9) web application and Multi-Page Document OCR Engine.
 
-Technical Specifications:
+Technical Specifications & Current Architecture:
 
-1. Backend (Flask, TensorFlow, OpenCV):
+1. Backend (Flask, TensorFlow, OpenCV, Generative AI):
 
-main.py: Create a Flask server with CORS enabled. Implement a /predict POST route that accepts a Base64 image.
+main.py: A Flask server with CORS enabled. 
+- /predict POST route: Accepts a Base64 drawing. Preprocesses it by extracting the ink bounding box, centering it on a square canvas to preserve the aspect ratio, resizing it to 20x20, and padding it to 28x28 (white on black, normalized to [0,1]). It loads `character_model_tf210.h5` and uses the EMNIST Balanced mapping (47 classes) to return the character and confidence score.
+- /ocr POST route: Handles multi-page PDF documents and images. Batches multiple pages into a single API request using Google's `gemini-2.5-flash` to bypass rate limits (15 RPM). Implements graceful offline fallbacks including Ollama local LLM (`qwen2.5vl:7b`), EasyOCR, TrOCR, and Tesseract.
 
-Preprocessing Pipeline: Decode the Base64 image using OpenCV. Crucial: Find the bounding box of the drawn character, crop to this bounding box, add a 2-pixel padding, resize it to 28x28, grayscale it, invert it (EMNIST expects white text on black background), and normalize to [0,1].
+2. Model Training (model_trainer.py) & Dataset:
 
-Model Loading: Load character_model.h5. If it doesn't exist, return a JSON error prompting the user to run the trainer first.
-
-Mapping: Hardcode the EMNIST Balanced mapping (47 classes) so the API returns the actual character (e.g., 'A') and the confidence score.
-
-2. Model Training (model_trainer.py):
-
-Write a standalone script to train the model.
-
-Dataset Handling: Use the emnist Python package (pip install emnist) to fetch the 'balanced' dataset.
-
-The EMNIST Flip: You MUST rotate the images 90 degrees clockwise and flip them horizontally to fix the known EMNIST orientation bug before training.
-
-CNN Architecture: Conv2D (32 filters, 3x3, ReLU) -> MaxPooling2D -> Conv2D (64 filters, 3x3, ReLU) -> MaxPooling2D -> Flatten -> Dense (128, ReLU) -> Dropout (0.5) -> Dense (47, Softmax).
-
-Train for 5 epochs and save as character_model.h5.
+- Dataset Handling: The app now operates 100% offline using a locally exported `dataset/emnist_balanced.npz` (avoiding the broken `emnist` library download).
+- The EMNIST Flip: REMOVED. The current dataset is natively oriented correctly. Applying manual rotations breaks the model.
+- CNN Architecture: Conv2D (32 filters, 3x3, ReLU) -> MaxPooling2D -> Conv2D (64 filters, 3x3, ReLU) -> MaxPooling2D -> Flatten -> Dense (128, ReLU) -> Dropout (0.5) -> Dense (47, Softmax).
+- Saved as `character_model_tf210.h5`.
 
 3. Frontend (Modern UI - HTML/JS/CSS):
 
-templates/index.html: Clean, centered, dark-themed UI. Include a 300x300 HTML5 Canvas, a "Clear" button, and a "Predict" button. Include an area to display the predicted character (large font) and confidence %.
-
-static/css/style.css: Make it look modern. Give the canvas a white background and a subtle glow or shadow.
-
-static/js/script.js: * Implement smooth drawing logic handling both mouse and touch events.
-
-Crucial: Set ctx.lineWidth = 15 and ctx.lineCap = 'round'. (A thin stroke will disappear when downscaled to 28x28).
-
-Capture the canvas as Base64 and send it to /predict using the Fetch API.
+templates/index.html: Clean, centered, dark-themed UI. Features a 300x300 HTML5 Canvas, a "Clear" button, and a "Predict" button. Includes sections for displaying both the Character Prediction and the Document OCR results.
+static/css/style.css: Modern styling with glowing canvas interactions.
+static/js/script.js: Implements smooth drawing logic handling both mouse and touch events. Crucial: Set ctx.lineWidth = 15 and ctx.lineCap = 'round'.
 
 4. File Structure & Dependencies:
 
 main.py
-
 model_trainer.py
-
+start_server.bat (Windows startup script handling Python environments and ports)
 static/js/script.js
-
 static/css/style.css
-
 templates/index.html
+dataset/emnist_balanced.npz
+dataset_samples/ (Contains visual .png examples of the dataset)
+requirements.txt
 
-requirements.txt: tensorflow, flask, numpy, opencv-python-headless, flask-cors, emnist
-
-Execution Rule: Write the complete code for all 6 files without omitting any logic or using placeholders. Ensure the API gracefully handles empty canvas submissions.
+Execution Rule: Maintain clean, highly optimized logic. Ensure API batching is used for LLM vision models to maximize throughput.

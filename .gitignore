@@ -47,3 +47,28 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# ML model files (large)
+*.h5
+*.hdf5
+*.pkl
+*.pt
+*.pth
+
+# Dataset folders
+artifacts/hcr-app/dataset/
+artifacts/hcr-app/dataset_samples/
+
+# Debug images
+artifacts/hcr-app/debug_*.png
+artifacts/hcr-app/test_char.png
+
+# Archives
+*.zip

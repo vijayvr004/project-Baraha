@@ -3,94 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Handwritten Character Recognition</title>
+    <title>Baraha — Handwritten Recognition</title>
+    <meta name="description" content="AI-powered handwritten character and document recognition. Draw a single character or upload a photo of handwritten notes for full text extraction using TrOCR.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Character Recognition</h1>
-            <p class="subtitle">Draw a character (A–Z, 0–9) and let AI identify it</p>
+            <div class="logo-badge">AI OCR</div>
+            <h1>Handwritten Recognition</h1>
+            <p class="subtitle">Draw a single character or upload a full handwritten document</p>
         </header>
 
+        <!-- ── Model Status Banner ───────────────────────────────────────── -->
+        <div class="model-banner" id="modelBanner">
+            <div class="model-banner-inner" id="modelBannerInner">
+                <div class="model-spinner" id="modelSpinner"></div>
+                <div class="model-banner-text">
+                    <span class="model-banner-title" id="modelBannerTitle">Loading TrOCR Model…</span>
+                    <span class="model-banner-sub" id="modelBannerSub">Downloading microsoft/trocr-base-handwritten (~400 MB). This only happens once.</span>
+                </div>
+                <div class="engine-badge" id="engineBadge">
+                    <span class="badge-dot"></span>
+                    <span id="engineBadgeLabel">Loading…</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar" role="tablist">
+            <button class="tab-btn active" id="tabDraw" role="tab" aria-selected="true" aria-controls="panelDraw">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                Draw Character
+            </button>
+            <button class="tab-btn" id="tabUpload" role="tab" aria-selected="false" aria-controls="panelUpload">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                Upload Document
+            </button>
+            <div class="tab-indicator" id="tabIndicator"></div>
+        </div>
+
         <main>
-            <div class="app-layout">
-                <div class="canvas-section">
-                    <div class="canvas-wrapper">
-                        <canvas id="drawCanvas" width="300" height="300"></canvas>
-                        <div class="canvas-hint">Draw here</div>
+            <!-- ═══════════════ TAB 1: DRAW CHARACTER ═══════════════ -->
+            <div class="tab-panel active" id="panelDraw" role="tabpanel" aria-labelledby="tabDraw">
+                <div class="app-layout">
+                    <div class="canvas-section">
+                        <div class="canvas-wrapper">
+                            <canvas id="drawCanvas" width="300" height="300"></canvas>
+                            <div class="canvas-hint">Draw here</div>
+                        </div>
+                        <div class="controls">
+                            <button id="clearBtn" class="btn btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                </svg>
+                                Clear
+                            </button>
+                            <button id="predictBtn" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                                </svg>
+                                Predict
+                            </button>
+                        </div>
                     </div>
-                    <div class="controls">
-                        <button id="clearBtn" class="btn btn-secondary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                            </svg>
-                            Clear
-                        </button>
-                        <button id="predictBtn" class="btn btn-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                            </svg>
-                            Predict
-                        </button>
+
+                    <div class="result-section">
+                        <div class="result-card" id="resultCard">
+                            <div class="result-idle active" id="resultIdle">
+                                <div class="idle-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                                    </svg>
+                                </div>
+                                <p>Draw a character and click Predict</p>
+                            </div>
+
+                            <div class="result-loading" id="resultLoading">
+                                <div class="spinner"></div>
+                                <p>Analyzing…</p>
+                            </div>
+
+                            <div class="result-output" id="resultOutput">
+                                <div class="predicted-char" id="predictedChar">?</div>
+                                <div class="confidence-container">
+                                    <span class="confidence-label">Confidence</span>
+                                    <div class="confidence-bar-wrapper">
+                                        <div class="confidence-bar" id="confidenceBar"></div>
+                                    </div>
+                                    <span class="confidence-value" id="confidenceValue">0%</span>
+                                </div>
+                                <div class="alternatives">
+                                    <p class="alternatives-label">Other possibilities</p>
+                                    <div class="alternatives-list" id="alternativesList"></div>
+                                </div>
+                                <div class="sara-controls" id="saraControlsChar" style="display:none;">
+                                    <button class="btn btn-sm btn-sara-play" id="saraPlayChar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                        Sara
+                                    </button>
+                                    <button class="btn btn-sm btn-sara-stop" id="saraStopChar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                                    </button>
+                                    <span class="sara-label" id="saraLabelChar">Sara is reading...</span>
+                                </div>
+                            </div>
+
+                            <div class="result-error" id="resultError">
+                                <div class="error-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                                    </svg>
+                                </div>
+                                <p id="errorMessage">An error occurred.</p>
+                                <p class="error-sub" id="errorSub"></p>
+                            </div>
+                        </div>
+
+                        <div class="info-panel">
+                            <div class="info-item">
+                                <span class="info-label">Dataset</span>
+                                <span class="info-value">EMNIST Balanced</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Classes</span>
+                                <span class="info-value">47 characters</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Architecture</span>
+                                <span class="info-value">CNN</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="result-section">
-                    <div class="result-card" id="resultCard">
-                        <div class="result-idle" id="resultIdle">
-                            <div class="idle-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                                </svg>
-                            </div>
-                            <p>Draw a character and click Predict</p>
+            <!-- ═══════════════ TAB 2: UPLOAD DOCUMENT ═══════════════ -->
+            <div class="tab-panel" id="panelUpload" role="tabpanel" aria-labelledby="tabUpload">
+                <div class="upload-layout">
+
+                    <!-- Left: Upload zone + preview -->
+                    <div class="upload-left">
+                        <div class="engine-selector" style="margin-bottom: 12px;">
+                            <label for="engineSelect" class="info-label" style="display: block; margin-bottom: 4px; font-size: 0.85rem;">Select OCR Engine</label>
+                            <select id="engineSelect" class="form-select" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-primary); border: 1px solid var(--border-dark); color: var(--text-primary); outline: none;">
+                                <option value="gemini">Google Gemini Vision (Fast, Accurate)</option>
+                                <option value="groq">Groq Llama-3.2 Vision (Fast, Free Alternative)</option>
+                                <option value="ollama">Ollama Local (Slow, Offline)</option>
+                            </select>
                         </div>
-
-                        <div class="result-loading" id="resultLoading">
-                            <div class="spinner"></div>
-                            <p>Analyzing...</p>
-                        </div>
-
-                        <div class="result-output" id="resultOutput">
-                            <div class="predicted-char" id="predictedChar">?</div>
-                            <div class="confidence-container">
-                                <span class="confidence-label">Confidence</span>
-                                <div class="confidence-bar-wrapper">
-                                    <div class="confidence-bar" id="confidenceBar"></div>
+                        <div class="drop-zone" id="dropZone">
+                            <div class="drop-zone-idle" id="dropIdle">
+                                <div class="drop-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                                    </svg>
                                 </div>
-                                <span class="confidence-value" id="confidenceValue">0%</span>
+                                <p class="drop-title">Drop your image or PDF here</p>
+                                <p class="drop-sub">or click to browse files</p>
+                                <p class="drop-formats">PDF · PNG · JPG · WEBP · BMP</p>
                             </div>
-
-                            <div class="alternatives">
-                                <p class="alternatives-label">Other possibilities</p>
-                                <div class="alternatives-list" id="alternativesList"></div>
+                            <div class="drop-zone-loading" id="dropLoading">
+                                <div class="spinner"></div>
+                                <p id="ocrLoadingMsg">Running TrOCR — please wait…</p>
                             </div>
+                            <input type="file" id="fileInput" accept="application/pdf,image/png,image/jpeg,image/webp,image/bmp,image/tiff" hidden>
                         </div>
 
-                        <div class="result-error" id="resultError">
-                            <div class="error-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                                </svg>
+                        <!-- Image Preview -->
+                        <div class="preview-box" id="previewBox">
+                            <div class="preview-header">
+                                <span class="preview-label">Preview</span>
+                                <button class="btn-icon" id="clearUploadBtn" title="Remove image">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
                             </div>
-                            <p id="errorMessage">An error occurred.</p>
-                            <p class="error-sub" id="errorSub"></p>
+                            <img id="previewImg" src="" alt="Uploaded document preview">
+                            <div class="preview-meta" id="previewMeta"></div>
                         </div>
                     </div>
 
-                    <div class="info-panel">
-                        <div class="info-item">
-                            <span class="info-label">Dataset</span>
-                            <span class="info-value">EMNIST Balanced</span>
+                    <!-- Right: OCR Result -->
+                    <div class="upload-right">
+                        <div class="ocr-result-card" id="ocrResultCard">
+                            <!-- Idle state -->
+                            <div class="ocr-idle active" id="ocrIdle">
+                                <div class="idle-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                                    </svg>
+                                </div>
+                                <p>Upload an image to extract text</p>
+                                <p class="ocr-idle-sub" id="idleEngineNote">TrOCR model loading…</p>
+                            </div>
+
+                            <!-- Result state -->
+                            <div class="ocr-output" id="ocrOutput">
+                                <div class="ocr-output-header">
+                                    <span class="ocr-output-label">Extracted Text</span>
+                                    <span class="ocr-word-count" id="ocrWordCount">0 words</span>
+                                </div>
+                                <div id="ocrPagesContainer" class="ocr-pages-container">
+                                    <!-- Dynamic textareas per page will be injected here -->
+                                </div>
+                                <div class="ocr-actions">
+                                    <button class="btn btn-secondary btn-sm" id="copyBtn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                        </svg>
+                                        Copy
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" id="downloadTxtBtn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                                        </svg>
+                                        .txt
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" id="downloadPdfBtn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                                        </svg>
+                                        .pdf
+                                    </button>
+                                    <button class="btn btn-primary btn-sm" id="downloadDocxBtn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                                        </svg>
+                                        .docx
+                                    </button>
+                                    <div class="sara-controls" id="saraControlsDoc" style="display:none;">
+                                        <button class="btn btn-sm btn-sara-play" id="saraPlayDoc">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                            Sara
+                                        </button>
+                                        <button class="btn btn-sm btn-sara-stop" id="saraStopDoc">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                                        </button>
+                                        <span class="sara-label" id="saraLabelDoc">Sara is reading...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error state -->
+                            <div class="ocr-error" id="ocrError">
+                                <div class="error-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                                    </svg>
+                                </div>
+                                <p id="ocrErrorMessage">OCR failed.</p>
+                            </div>
                         </div>
-                        <div class="info-item">
-                            <span class="info-label">Classes</span>
-                            <span class="info-value">47 characters</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Architecture</span>
-                            <span class="info-value">CNN</span>
+
+                        <!-- Stats panel -->
+                        <div class="info-panel" id="ocrStatsPanel">
+                            <div class="info-item">
+                                <span class="info-label">Engine</span>
+                                <span class="info-value" id="statEngine">Loading…</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Model</span>
+                                <span class="info-value" id="statModel">—</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Lines detected</span>
+                                <span class="info-value" id="ocrBlockCount">—</span>
+                            </div>
                         </div>
                     </div>
                 </div>
